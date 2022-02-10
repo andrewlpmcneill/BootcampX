@@ -1,7 +1,16 @@
 const { Pool } = require('pg');
 const args = process.argv.slice(2);
-const cohort = `${args[0]}`;
-const limit = `${args[1]}`;
+const cohort = `${args[0]}` || 'FEB';
+const limit = `${args[1]}` || 5;
+const values = [`%${cohort}%`, limit];
+
+const queryString = `
+SELECT students.id as student_id, students.name as name, cohorts.name as cohort
+FROM students
+JOIN cohorts ON cohorts.id = cohort_id
+WHERE cohorts.name LIKE $1
+LIMIT $2;
+`;
 
 const pool = new Pool({
   user: 'vagrant',
@@ -10,13 +19,7 @@ const pool = new Pool({
   database: 'bootcampx'
 });
 
-pool.query(`
-SELECT students.id AS student_id, students.name AS name, cohorts.name AS cohort
-FROM students
-JOIN cohorts ON students.cohort_id = cohorts.id
-WHERE cohorts.name LIKE '%${cohort}%'
-LIMIT ${limit};
-`)
+pool.query(queryString, values)
   .then(res => {
     // console.log(res.rows);
     res.rows.forEach(user => {
